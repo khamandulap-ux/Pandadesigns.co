@@ -110,7 +110,7 @@
 
     .brand-copy img {
       width: auto;
-      height: 86px;
+      height: 96px;
       object-fit: contain;
     }
 
@@ -714,10 +714,11 @@
     }
 
     footer {
-      background: #0b0d10;
-      color: #eef2f7;
+      background: #eaf3eb;
+      color: #1f2937;
       padding: 30px 0 20px;
       margin-top: 24px;
+      border-top: 1px solid #d4e4d6;
     }
 
     .footer-top {
@@ -730,8 +731,9 @@
 
     .footer-brand img {
       width: auto;
-      height: 64px;
+      height: 78px;
       object-fit: contain;
+      filter: saturate(1.1) contrast(1.04);
     }
 
     .socials {
@@ -743,11 +745,11 @@
       width: 42px;
       height: 42px;
       border-radius: 999px;
-      background: #1a1d23;
+      background: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid #242934;
+      border: 1px solid #d0dfd3;
       transition: transform .2s ease;
     }
 
@@ -761,7 +763,7 @@
 
     .footer-line {
       height: 1px;
-      background: #232832;
+      background: #cdddcf;
       margin-bottom: 14px;
     }
 
@@ -770,7 +772,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 20px;
-      color: #9ea7b4;
+      color: #4b5563;
       font-size: 13px;
     }
 
@@ -826,13 +828,13 @@
     @media (max-width: 560px) {
       .container { width: min(var(--container), calc(100% - 28px)); }
       .hero h1 { font-size: 42px; }
-      .brand-copy img { height: 36px; width: auto; }
+      .brand-copy img { height: 44px; width: auto; }
       .btn { width: 100%; }
       .hero-actions { flex-direction: column; }
       .form-card { padding: 24px; }
       .price-card { padding: 28px 24px; }
       .whatsapp-float { right: 16px; bottom: 16px; }
-      .footer-brand img { height: 32px; }
+      .footer-brand img { height: 42px; }
       .footer-top,
       .footer-bottom { align-items: flex-start; }
     }
