@@ -127,6 +127,34 @@
     nav a:hover,
     .footer-links a:hover { color: var(--text); }
 
+    nav a {
+      position: relative;
+      color: #4b5563;
+      transition: color .28s ease;
+    }
+
+    nav a::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -8px;
+      width: 100%;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--green);
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: transform .28s ease;
+    }
+
+    nav a.active {
+      color: var(--green);
+    }
+
+    nav a.active::after {
+      transform: scaleX(1);
+    }
+
     .btn {
       display: inline-flex;
       align-items: center;
@@ -1181,6 +1209,51 @@
     }, { threshold: 0.12 });
 
     document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+
+    const navLinks = Array.from(document.querySelectorAll('header nav a[href^="#"]'));
+    const trackedSections = navLinks
+      .map((link) => {
+        const section = document.querySelector(link.getAttribute('href'));
+        if (!section) return null;
+        return { link, section };
+      })
+      .filter(Boolean);
+
+    const setActiveLink = (activeLink) => {
+      navLinks.forEach((link) => {
+        link.classList.toggle('active', link === activeLink);
+      });
+    };
+
+    const updateActiveNav = () => {
+      if (!trackedSections.length) return;
+
+      const viewportAnchor = window.scrollY + (window.innerHeight * 0.38);
+
+      let current = trackedSections[0];
+      trackedSections.forEach((item) => {
+        if (item.section.offsetTop <= viewportAnchor) {
+          current = item;
+        }
+      });
+
+      setActiveLink(current.link);
+    };
+
+    let ticking = false;
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        updateActiveNav();
+        ticking = false;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', updateActiveNav);
+    window.addEventListener('load', updateActiveNav);
+    updateActiveNav();
   </script>
 </body>
 </html>
