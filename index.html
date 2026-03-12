@@ -397,10 +397,11 @@
 
     .services-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 22px;
-      max-width: 1080px;
+      max-width: 760px;
       margin: 0 auto;
+      justify-content: center;
     }
 
     .companies-wrap {
@@ -434,6 +435,7 @@
       padding: 30px;
       box-shadow: var(--shadow);
       transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+      height: 100%;
     }
 
     .service-card:hover {
@@ -1038,7 +1040,7 @@
         <div class="services-grid">
           <article class="service-card">
             <div class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a15 15 0 0 1 0 18"></path><path d="M12 3a15 15 0 0 0 0 18"></path></svg></div>
-            <h3>All social media management <span class="arrow">↗</span></h3>
+            <h3>All Social Media Management <span class="arrow">↗</span></h3>
             <p>Pana Lisa manages all social medias pages that are required for your business.</p>
           </article>
           <article class="service-card">
