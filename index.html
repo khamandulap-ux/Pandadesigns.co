@@ -1676,6 +1676,10 @@
           <input id="reviewName" type="text" placeholder="Your name" required>
         </div>
         <div>
+          <label for="reviewEmail">Email (optional)</label>
+          <input id="reviewEmail" type="email" placeholder="you@example.com">
+        </div>
+        <div>
           <label for="reviewText">Review *</label>
           <textarea id="reviewText" placeholder="Tell us about your experience" required></textarea>
         </div>
@@ -1764,6 +1768,7 @@
     const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
     const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
     const REVIEWS_TABLE_ENDPOINT = `${SUPABASE_URL}/rest/v1/reviews`;
+    const REVIEW_NOTIFICATION_ENDPOINT = 'https://formsubmit.co/ajax/pandadesigns.agency@gmail.com';
 
     const getSupabaseHeaders = (extraHeaders = {}) => ({
       apikey: SUPABASE_ANON_KEY,
@@ -1782,6 +1787,7 @@
     const reviewForm = document.getElementById('reviewForm');
     const reviewName = document.getElementById('reviewName');
     const reviewText = document.getElementById('reviewText');
+    const reviewEmail = document.getElementById('reviewEmail');
     const reviewRating = document.getElementById('reviewRating');
     const starSelector = document.getElementById('starSelector');
 
@@ -1838,23 +1844,38 @@
       return normalizeReviews(payload);
     };
 
-    const submitReview = async (review) => {
-      const response = await fetch(REVIEWS_TABLE_ENDPOINT, {
+    const sendReviewToInbox = async (review) => {
+      const reviewCopyPasteBlock = [
+        'Name: ' + review.name,
+        'Email: ' + (review.email || 'Not provided'),
+        'Rating: ' + review.rating + '/5',
+        'Review:',
+        review.text
+      ].join('\n');
+
+      const response = await fetch(REVIEW_NOTIFICATION_ENDPOINT, {
         method: 'POST',
-        headers: getSupabaseHeaders({
+        headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Prefer: 'return=representation'
-        }),
-        body: JSON.stringify([{ ...review }])
+          Accept: 'application/json'
+        },
+        body: JSON.stringify({
+          _subject: 'New Website Review Submission',
+          _captcha: 'false',
+          _template: 'table',
+          reviewer_name: review.name,
+          reviewer_email: review.email || 'Not provided',
+          rating: `${review.rating}/5`,
+          review_text: review.text,
+          copy_paste_format: reviewCopyPasteBlock
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Unable to save review');
+        throw new Error('Unable to email review');
       }
 
-      const payload = await response.json();
-      return normalizeReview(payload?.[0]);
+      return response.json();
     };
 
     const renderStars = (rating) => {
@@ -1979,6 +2000,7 @@
     reviewForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       const name = reviewName?.value?.trim();
+      const email = reviewEmail?.value?.trim() || '';
       const text = reviewText?.value?.trim();
       const rating = Number(reviewRating?.value || 0);
 
@@ -1986,38 +2008,13 @@
         return;
       }
 
-      const optimisticId = `pending-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      const optimisticReview = {
-        id: optimisticId,
-        name,
-        text,
-        rating,
-        timestamp: new Date().toISOString(),
-        isPending: true
-      };
-
-      reviews.unshift(optimisticReview);
-      renderReviews();
-      updateSummary();
-      closeModal();
-
       try {
-        const storedReview = await submitReview({ name, text, rating });
-        if (!storedReview) throw new Error('Invalid review response');
-        const pendingIndex = reviews.findIndex((review) => review.id === optimisticId);
-        if (pendingIndex >= 0) {
-          reviews[pendingIndex] = storedReview;
-        }
+        await sendReviewToInbox({ name, email, text, rating });
+        alert('Thanks! Your review was sent for approval and will be uploaded soon.');
+        closeModal();
       } catch (error) {
-        const pendingIndex = reviews.findIndex((review) => review.id === optimisticId);
-        if (pendingIndex >= 0) {
-          reviews.splice(pendingIndex, 1);
-        }
-        alert('We could not save your review right now. Please try again.');
+        alert('We could not send your review right now. Please try again.');
       }
-
-      renderReviews();
-      updateSummary();
     });
 
     const initializeReviews = async () => {
