@@ -727,11 +727,41 @@
       letter-spacing: -0.01em;
     }
 
-    .stars {
-      color: #f2b01e;
-      letter-spacing: 0.15em;
-      font-size: 24px;
+    .stars,
+    .review-stars {
+      --star-size: 24px;
+      display: inline-flex;
+      gap: 3px;
       line-height: 1;
+      vertical-align: middle;
+    }
+
+    .star {
+      position: relative;
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      font-size: var(--star-size);
+      line-height: 1;
+    }
+
+    .star::before,
+    .star::after {
+      content: '★';
+      position: absolute;
+      inset: 0;
+      line-height: 1;
+    }
+
+    .star::before {
+      color: #d1d5db;
+    }
+
+    .star::after {
+      color: #f2b01e;
+      width: calc(var(--fill, 0) * 100%);
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     .rating-main small {
@@ -785,9 +815,7 @@
     }
 
     .review-stars {
-      font-size: 16px;
-      color: #f2b01e;
-      letter-spacing: 0.12em;
+      --star-size: 18px;
     }
 
     .review-card.new-review {
@@ -1364,7 +1392,7 @@
         <div class="rating-summary">
           <div class="rating-main">
             <div class="rating-line">
-              <span class="stars" id="overallStars" aria-hidden="true">★★★★★</span>
+              <span class="stars" id="overallStars" aria-live="polite" aria-label="0 out of 5 stars"></span>
               <span id="overallRatingText">4.8/5</span>
             </div>
             <small id="reviewsCountText">Based on 4 reviews</small>
@@ -1603,8 +1631,11 @@
     const reviews = [...initialReviews];
 
     const renderStars = (rating) => {
-      const rounded = Math.round(rating);
-      return Array.from({ length: 5 }, (_, i) => (i < rounded ? '★' : '☆')).join('');
+      const clampedRating = Math.max(0, Math.min(5, Number(rating) || 0));
+      return Array.from({ length: 5 }, (_, index) => {
+        const fill = Math.max(0, Math.min(1, clampedRating - index));
+        return `<span class="star" style="--fill:${fill.toFixed(3)}" aria-hidden="true"></span>`;
+      }).join('');
     };
 
     const renderReviews = () => {
@@ -1616,7 +1647,7 @@
         if (index === 0) card.classList.add('new-review');
 
         card.innerHTML = `
-          <div class="review-stars" aria-label="${review.rating} out of 5 stars">${renderStars(review.rating)}</div>
+          <div class="review-stars" aria-label="${review.rating.toFixed(1)} out of 5 stars">${renderStars(review.rating)}</div>
           <h3>${review.name}</h3>
           <p>${review.text}</p>
         `;
@@ -1630,7 +1661,10 @@
       const avg = total / reviews.length;
       const avgText = avg.toFixed(1);
 
-      if (overallStars) overallStars.textContent = renderStars(avg);
+      if (overallStars) {
+        overallStars.innerHTML = renderStars(avg);
+        overallStars.setAttribute('aria-label', `${avgText} out of 5 stars`);
+      }
       if (overallRatingText) overallRatingText.textContent = `${avgText}/5`;
       if (reviewsCountText) reviewsCountText.textContent = `Based on ${reviews.length} review${reviews.length === 1 ? '' : 's'}`;
       if (ratingBarFill) ratingBarFill.style.width = `${(avg / 5) * 100}%`;
