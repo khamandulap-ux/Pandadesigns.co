@@ -816,6 +816,12 @@
       line-height: 1.55;
     }
 
+    .review-meta {
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
     .review-stars {
       --star-size: 18px;
     }
@@ -1619,8 +1625,7 @@
       });
     }
 
-    const REVIEWS_STORAGE_KEY = 'panaLisaReviews';
-    const initialReviews = [];
+    const REVIEWS_API_ENDPOINT = '/api/reviews';
 
     const reviewsGrid = document.getElementById('reviewsGrid');
     const overallStars = document.getElementById('overallStars');
@@ -1636,50 +1641,71 @@
     const reviewRating = document.getElementById('reviewRating');
     const starSelector = document.getElementById('starSelector');
 
-    const sanitizeReviews = (items) => {
+    const reviews = [];
+
+    const normalizeReview = (item) => {
+      const name = String(item?.name || '').trim();
+      const text = String(item?.text || '').trim();
+      const rating = Math.round(Number(item?.rating || 0));
+      const timestamp = String(item?.timestamp || '').trim();
+
+      if (!name || !text || rating < 1 || rating > 5) {
+        return null;
+      }
+
+      return {
+        name,
+        text,
+        rating,
+        timestamp: timestamp || new Date().toISOString(),
+        isPending: Boolean(item?.isPending)
+      };
+    };
+
+    const normalizeReviews = (items) => {
       if (!Array.isArray(items)) return [];
-
-      return items
-        .map((item) => {
-          const name = String(item?.name || '').trim();
-          const text = String(item?.text || '').trim();
-          const rating = Number(item?.rating || 0);
-
-          if (!name || !text || rating < 1 || rating > 5) {
-            return null;
-          }
-
-          return {
-            name,
-            text,
-            rating: Math.round(rating)
-          };
-        })
-        .filter(Boolean);
+      return items.map(normalizeReview).filter(Boolean);
     };
 
-    const loadStoredReviews = () => {
-      try {
-        const saved = localStorage.getItem(REVIEWS_STORAGE_KEY);
-        if (!saved) return [...initialReviews];
+    const formatReviewTimestamp = (value) => {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return 'Just now';
+      return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    };
 
-        const parsed = JSON.parse(saved);
-        const validReviews = sanitizeReviews(parsed);
-        return validReviews.length ? validReviews : [...initialReviews];
-      } catch (error) {
-        return [...initialReviews];
+    const fetchReviews = async () => {
+      const response = await fetch(REVIEWS_API_ENDPOINT, { headers: { Accept: 'application/json' } });
+      if (!response.ok) {
+        throw new Error('Unable to load reviews');
       }
+
+      const payload = await response.json();
+      return normalizeReviews(payload?.reviews || []);
     };
 
-    const saveReviews = (items) => {
-      try {
-        localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(sanitizeReviews(items)));
-      } catch (error) {
-        // Ignore storage errors and keep reviews available for the current session.
+    const submitReview = async (review) => {
+      const response = await fetch(REVIEWS_API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(review)
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to save review');
       }
-    };
 
-    const reviews = loadStoredReviews();
+      const payload = await response.json();
+      return normalizeReview(payload?.review);
+    };
 
     const renderStars = (rating) => {
       const clampedRating = Math.max(0, Math.min(5, Number(rating) || 0));
@@ -1721,7 +1747,13 @@
         const text = document.createElement('p');
         text.textContent = review.text;
 
-        card.append(stars, name, text);
+        const meta = document.createElement('small');
+        meta.className = 'review-meta';
+        meta.textContent = review.isPending
+          ? 'Saving...'
+          : `Posted ${formatReviewTimestamp(review.timestamp)}`;
+
+        card.append(stars, name, text, meta);
         reviewsGrid.appendChild(card);
       });
     };
@@ -1794,7 +1826,7 @@
       }
     });
 
-    reviewForm?.addEventListener('submit', (event) => {
+    reviewForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       const name = reviewName?.value?.trim();
       const text = reviewText?.value?.trim();
@@ -1804,15 +1836,56 @@
         return;
       }
 
-      reviews.unshift({ name, text, rating });
-      saveReviews(reviews);
+      const optimisticId = `pending-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const optimisticReview = {
+        id: optimisticId,
+        name,
+        text,
+        rating,
+        timestamp: new Date().toISOString(),
+        isPending: true
+      };
+
+      reviews.unshift(optimisticReview);
       renderReviews();
       updateSummary();
       closeModal();
+
+      try {
+        const storedReview = await submitReview({ name, text, rating });
+        if (!storedReview) throw new Error('Invalid review response');
+        const pendingIndex = reviews.findIndex((review) => review.id === optimisticId);
+        if (pendingIndex >= 0) {
+          reviews[pendingIndex] = storedReview;
+        }
+      } catch (error) {
+        const pendingIndex = reviews.findIndex((review) => review.id === optimisticId);
+        if (pendingIndex >= 0) {
+          reviews.splice(pendingIndex, 1);
+        }
+        alert('We could not save your review right now. Please try again.');
+      }
+
+      renderReviews();
+      updateSummary();
     });
 
-    renderReviews();
-    updateSummary();
+    const initializeReviews = async () => {
+      renderReviews();
+      updateSummary();
+
+      try {
+        const loadedReviews = await fetchReviews();
+        reviews.splice(0, reviews.length, ...loadedReviews);
+      } catch (error) {
+        console.error(error);
+      }
+
+      renderReviews();
+      updateSummary();
+    };
+
+    initializeReviews();
 
   </script>
 </body>

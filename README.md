@@ -1,16 +1,23 @@
-## Pana Lisa
+## Pana Lisa Website
 
-<!--
-**PanaLisa/PanaLisa** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+Landing page for Pana Lisa social media services.
 
-Here are some ideas to get you started:
+## Shared reviews system
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+This project now includes a small Express + SQLite backend so testimonials are shared across all visitors.
+
+### Run locally
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the server:
+   ```bash
+   npm start
+   ```
+3. Open `http://localhost:3000`.
+
+Reviews are stored in `data/reviews.db` and served through:
+- `GET /api/reviews`
+- `POST /api/reviews`
