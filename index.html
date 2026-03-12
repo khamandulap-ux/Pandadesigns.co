@@ -713,7 +713,7 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 28px;
-      align-items: start;
+      align-items: stretch;
       max-width: 1120px;
       margin: 0 auto;
     }
@@ -727,6 +727,7 @@
       position: relative;
       display: flex;
       flex-direction: column;
+      height: 100%;
       transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
     }
 
@@ -787,6 +788,26 @@
       display: grid;
       gap: 16px;
       margin-bottom: 34px;
+      flex: 1;
+      align-content: start;
+    }
+
+    .price-card.premium-card ul {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 14px;
+    }
+
+    .price-card.premium-card li {
+      align-items: flex-start;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .price-card .note {
+      margin-top: -10px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.5;
     }
 
     .price-card li {
@@ -1326,6 +1347,7 @@
       .hero-actions { flex-direction: column; }
       .form-card { padding: 24px; }
       .price-card { padding: 28px 24px; }
+      .price-card.premium-card ul { grid-template-columns: 1fr; }
       .whatsapp-float { right: 16px; bottom: 16px; }
       .footer-brand img { height: 42px; }
       .footer-top,
@@ -1519,7 +1541,7 @@
             <a href="#contact" class="btn btn-primary">Enquire Now</a>
           </article>
 
-          <article class="price-card">
+          <article class="price-card premium-card">
             <div class="label">Premium</div>
             <div class="price">Custom</div>
             <div class="sub">Full-service management tailored to your goals.</div>
@@ -1532,9 +1554,9 @@
               <li><span class="tick">✓</span> Logo redesign</li>
               <li><span class="tick">✓</span> Banner design</li>
               <li><span class="tick">✓</span> Website content writing</li>
-              <li><span class="tick">✓</span> Logo high-resolution upgrades</li>
+              <li><span class="tick">✓</span> High-resolution logo upgrades</li>
             </ul>
-            <div class="sub">Note: Some services can be selected individually, such as website creation, logo redesign, or banner design.</div>
+            <div class="sub note">Note: You can also select individual services like website creation, logo redesign, or banner design.</div>
             <a href="#contact" class="btn btn-dark">Enquire Now</a>
           </article>
         </div>
